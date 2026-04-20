@@ -31,6 +31,33 @@ HOW TO USE
 ----------
 The app has 6 tabs. Fill in what you have, leave blank what you don't.
 
+
+NEW: NOTEPAD / TEXT FILE WORKFLOW
+---------------------------------
+If you prefer preparing content in Notepad instead of typing into tabs:
+
+1. Click "Save Text Template" in the app, or use the sample file:
+     Sample_Notepad_Input.txt
+2. Fill the text file using:
+     key: value
+   for single-line fields, and:
+     [section_name]
+     multi-line content
+     [/section_name]
+   for larger sections.
+3. Click "Load Text Input" in the app to import it.
+4. Generate PDF or DOCX normally.
+
+DIRECT TEXT-TO-PDF MODE
+-----------------------
+You can also generate directly from a text file without opening the GUI:
+
+  python generate_from_text.py --input my_report.txt --pdf my_report.pdf
+
+Or on Windows:
+
+  Generate_From_Text.bat C:\path\to\my_report.txt C:\path\to\my_report.pdf
+
 TAB 1 — Report Info
     Title, subtitle, period, author, org, TLP level, threat level
     Output PDF Path  — where to save the PDF

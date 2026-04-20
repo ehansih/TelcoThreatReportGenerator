@@ -50,6 +50,121 @@ C = {
 }
 MARGIN = 1.5 * 28.35   # 1.5 cm in points
 
+TEXT_MANIFEST_SINGLE_FIELDS = [
+    "title",
+    "subtitle",
+    "period",
+    "report_date",
+    "author",
+    "org",
+    "tlp",
+    "threat_level",
+    "output",
+    "output_docx",
+]
+
+TEXT_MANIFEST_MULTI_FIELDS = [
+    "exec_summary",
+    "top_risks",
+    "key_findings",
+    "signaling_overview",
+    "signaling_incidents",
+    "signaling_mitigations",
+    "core_5g_overview",
+    "core_5g_incidents",
+    "core_5g_mitigations",
+    "enterprise_it_overview",
+    "enterprise_it_incidents",
+    "enterprise_it_mitigations",
+    "fraud_overview",
+    "fraud_incidents",
+    "fraud_mitigations",
+    "supply_chain_overview",
+    "supply_chain_incidents",
+    "supply_chain_mitigations",
+    "actors",
+    "vulnerabilities",
+    "malware",
+    "breaches",
+    "iocs",
+]
+
+TEXT_MANIFEST_ALL_FIELDS = set(TEXT_MANIFEST_SINGLE_FIELDS + TEXT_MANIFEST_MULTI_FIELDS)
+
+
+def parse_text_manifest(content: str) -> dict:
+    data = {}
+    current_key = None
+    buffer = []
+
+    for raw_line in content.splitlines():
+        line = raw_line.rstrip("\n")
+        stripped = line.strip()
+
+        if current_key:
+            if stripped == f"[/{current_key}]":
+                data[current_key] = "\n".join(buffer).strip()
+                current_key = None
+                buffer = []
+            else:
+                buffer.append(line)
+            continue
+
+        if not stripped or stripped.startswith("#") or stripped.startswith(";"):
+            continue
+
+        if stripped.startswith("[") and stripped.endswith("]") and not stripped.startswith("[/"):
+            key = stripped[1:-1].strip()
+            if key not in TEXT_MANIFEST_ALL_FIELDS:
+                raise ValueError(f"Unknown text block: [{key}]")
+            current_key = key
+            buffer = []
+            continue
+
+        separator = ":" if ":" in line else "=" if "=" in line else None
+        if separator:
+            key, value = line.split(separator, 1)
+            key = key.strip()
+            if key not in TEXT_MANIFEST_ALL_FIELDS:
+                raise ValueError(f"Unknown field: {key}")
+            data[key] = value.strip()
+            continue
+
+        raise ValueError(
+            f"Invalid line in text manifest: {raw_line!r}. "
+            "Use key: value, key=value, or [section] ... [/section]."
+        )
+
+    if current_key:
+        raise ValueError(f"Missing closing tag for [{current_key}]")
+
+    return data
+
+
+def dump_text_manifest(data: dict) -> str:
+    lines = [
+        "# Telco Threat Report text manifest",
+        "# Single-line values use key: value",
+        "# Multi-line values use [section] ... [/section]",
+        "",
+    ]
+
+    for key in TEXT_MANIFEST_SINGLE_FIELDS:
+        value = str(data.get(key, "") or "")
+        lines.append(f"{key}: {value}")
+
+    lines.append("")
+
+    for key in TEXT_MANIFEST_MULTI_FIELDS:
+        lines.append(f"[{key}]")
+        value = str(data.get(key, "") or "").rstrip()
+        if value:
+            lines.append(value)
+        lines.append(f"[/{key}]")
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
 # ═══════════════════════════════════════════════════════════════════════════════
 #  PDF ENGINE
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1170,6 +1285,14 @@ class App(tk.Tk):
                    style="Sec.TButton",
                    command=self._load_yaml).pack(side="right", padx=4)
 
+        ttk.Button(foot, text="Load Text Input",
+                   style="Sec.TButton",
+                   command=self._load_text_manifest).pack(side="right", padx=4)
+
+        ttk.Button(foot, text="Save Text Template",
+                   style="Sec.TButton",
+                   command=self._save_text_manifest).pack(side="right", padx=4)
+
         ttk.Button(foot, text="Save YAML Manifest",
                    style="Sec.TButton",
                    command=self._save_yaml).pack(side="right", padx=4)
@@ -1212,6 +1335,15 @@ class App(tk.Tk):
         data.update(self._get_texts())
         return data
 
+    def _apply_loaded_data(self, data):
+        for k, v in data.items():
+            text_value = "" if v is None else str(v)
+            if k in self.vars:
+                self.vars[k].set(text_value)
+            elif k in self.texts:
+                self.texts[k].delete("1.0", "end")
+                self.texts[k].insert("1.0", text_value)
+
     # ── YAML LOAD / SAVE ─────────────────────────────────────────────────────
     def _save_yaml(self):
         path = filedialog.asksaveasfilename(
@@ -1235,13 +1367,37 @@ class App(tk.Tk):
         if not isinstance(data, dict):
             messagebox.showerror("Error", "Invalid YAML file.")
             return
-        for k, v in data.items():
-            if k in self.vars:
-                self.vars[k].set(str(v) if v else "")
-            elif k in self.texts:
-                self.texts[k].delete("1.0", "end")
-                self.texts[k].insert("1.0", str(v) if v else "")
+        self._apply_loaded_data(data)
         messagebox.showinfo("Loaded", "Manifest loaded successfully.")
+
+    def _save_text_manifest(self):
+        path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+            initialfile="report_input.txt")
+        if not path:
+            return
+        content = dump_text_manifest(self._get_all_data())
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        messagebox.showinfo("Saved", f"Text template saved to:
+{path}")
+
+    def _load_text_manifest(self):
+        path = filedialog.askopenfilename(
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+        if not path:
+            return
+        try:
+            with open(path, encoding="utf-8") as handle:
+                data = parse_text_manifest(handle.read())
+        except Exception as ex:
+            messagebox.showerror("Error", f"Failed to read text input:
+
+{ex}")
+            return
+        self._apply_loaded_data(data)
+        messagebox.showinfo("Loaded", "Text input loaded successfully.")
 
     # ── GENERATE ─────────────────────────────────────────────────────────────
     def _generate(self):

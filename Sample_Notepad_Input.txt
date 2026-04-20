@@ -1,0 +1,99 @@
+# Telco Threat Report text manifest
+# Single-line values use key: value
+# Multi-line values use [section] ... [/section]
+
+title: Nokia Telecom CTI Digest
+subtitle: Communications Service Providers - India & Global
+period: 13-16 February 2026
+report_date: 2026-02-16
+author: Analyst Name
+org: Nokia Networks
+tlp: AMBER
+threat_level: HIGH
+output: C:\Users\havardha\Downloads\Nokia_Report_Output.pdf
+output_docx: C:\Users\havardha\Downloads\Nokia_Report_Output.docx
+
+[exec_summary]
+Threat activity across telecom networks remained elevated during the reporting window, with signaling abuse, backbone targeting, and fraud operations continuing to create operational and subscriber risk.
+[/exec_summary]
+
+[top_risks]
+SS7 abuse for subscriber interception
+Backbone targeting by state-linked actors
+AI-assisted vishing and SIM swap campaigns
+[/top_risks]
+
+[key_findings]
+SS7 OTP interception activity observed | Unattributed eCrime | CRITICAL
+Backbone infrastructure targeting persists | China-nexus APT | HIGH
+[/key_findings]
+
+[signaling_overview]
+Provide 2-3 paragraphs covering the signaling threat landscape here.
+[/signaling_overview]
+
+[signaling_incidents]
+SS7 OTP Interception | Feb 2026 | CRITICAL | Targeting subscriber authentication traffic
+[/signaling_incidents]
+
+[signaling_mitigations]
+Deploy SS7 firewall rules
+Review interconnect exposure
+[/signaling_mitigations]
+
+[core_5g_overview]
+[/core_5g_overview]
+
+[core_5g_incidents]
+[/core_5g_incidents]
+
+[core_5g_mitigations]
+[/core_5g_mitigations]
+
+[enterprise_it_overview]
+[/enterprise_it_overview]
+
+[enterprise_it_incidents]
+[/enterprise_it_incidents]
+
+[enterprise_it_mitigations]
+[/enterprise_it_mitigations]
+
+[fraud_overview]
+[/fraud_overview]
+
+[fraud_incidents]
+[/fraud_incidents]
+
+[fraud_mitigations]
+[/fraud_mitigations]
+
+[supply_chain_overview]
+[/supply_chain_overview]
+
+[supply_chain_incidents]
+[/supply_chain_incidents]
+
+[supply_chain_mitigations]
+[/supply_chain_mitigations]
+
+[actors]
+Salt Typhoon | China (PRC) | Backbone routers | Exploit edge device | Living off the land | T1190,T1133
+[/actors]
+
+[vulnerabilities]
+CVE-2026-2329 | Grandstream GXP1600 | Unauthenticated RCE via web API | 9.8 | IMMEDIATE
+[/vulnerabilities]
+
+[malware]
+BPFDoor | Feb 2026 | HIGH | Passive Linux backdoor targeting telecom infrastructure | Hunt for raw socket listeners and hidden processes
+[/malware]
+
+[breaches]
+Example Telco | Feb 2026 | Telco | 1.2M subscriber records | Credential theft | Under Investigation
+[/breaches]
+
+[iocs]
+IPv4 | 185.220.101[.]47 | GhostSignal SS7 C2 | HIGH | BLOCK
+Domain | update-secure[.]xyz | OysterLoader | HIGH | BLOCK
+[/iocs]
